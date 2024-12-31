@@ -1,0 +1,22 @@
+[project]
+name = "adventofcode2024"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Tobias Ahlbrecht", email = "ta10@tu-clausthal.de" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "z3-solver>=4.13.3.0",
+    "z3>=0.2.0",
+    "pillow>=11.0.0",
+    "networkx>=3.4.2",
+]
+
+[project.scripts]
+adventofcode2024 = "adventofcode2024:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

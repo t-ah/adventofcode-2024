@@ -1,0 +1,156 @@
+from pathlib import Path
+
+num_pad = [
+    ["7", "8", "9"],
+    ["4", "5", "6"],
+    ["1", "2", "3"],
+    [" ", "0", "A"]
+]
+
+dir_pad = [
+    [" ", "^", "A"],
+    ["<", "v", ">"]
+]
+
+x_offset2direction = {
+    -2: "<<", -1: "<", 0: "", 1: ">", 2: ">>"
+}
+
+y_offset2direction = {
+    -3: "^^^", -2: "^^", -1: "^", 0: "", 1: "v", 2: "vv", 3: "vvv"
+}
+
+
+def main():
+    for file_name in ["p1-test.txt", "p1-input.txt"]:
+        path = Path(__file__).parent / file_name
+        if path.is_file():
+            solve(format_input(read_input(path)), file_name)
+
+
+def read_input(path: Path) -> str:
+    with open(path) as f:
+        return f.read()
+
+
+def format_input(s: str):
+    return s.split("\n")
+
+
+def solve(data, _) -> None:
+    num_coords = dict()
+    for y in range(len(num_pad)):
+        for x in range(len(num_pad[0])):
+            num_coords[num_pad[y][x]] = (x, y)
+    num_blocked = {(0, 3)}
+
+    dir_coords = dict()
+    for y in range(len(dir_pad)):
+        for x in range(len(dir_pad[0])):
+            dir_coords[dir_pad[y][x]] = (x, y)
+    dir_blocked = {(0, 0)}
+
+    num_cache = {"": "A"}
+    dir_cache = {"": "A"}
+
+    print(list(combinations("", "<<", "^^^")))
+
+    # total = 0
+    # for code in data:
+    #     tf = shortest_sequence(code, num_coords, num_cache, num_blocked, 1)
+    #     tf = shortest_sequence(tf, dir_coords, dir_cache, dir_blocked, 2)
+    #     result = len(tf) * int(code[:-1])
+    #     # print(len(tf), int(code[:-1]), result)
+    #     total += result
+    # print(f"Total: {total}")
+    # 259336 too high
+
+
+# def shortest_sequence(sequence, coords, cache, blocked, iterations):
+#     if iterations == 0:
+#         return sequence
+#     start = coords["A"]
+#     sections = sequence[:-1].split("A")
+#     new_sequence = "".join(
+#         [expand_once(section, coords, cache, blocked) for section in sections]
+#     )
+#     return shortest_sequence(new_sequence, coords, cache, blocked, iterations - 1)
+
+
+def shortest_transform(section, coords, cache, blocked, times):
+
+    if (section, times) in cache:
+        return cache[section, times]
+    pos = coords["A"]
+    best_path = ""
+    for btn in section + "A":
+        coord = coords[btn]
+        paths = generate_paths(pos, coord, blocked)
+        for path in paths:
+            best_path += shortest_transform(path, coords, cache, blocked, times - 1)
+        pos = coord
+    cache[section, times] = best_path
+    return best_path
+
+
+dir2offset = {
+    "<": (-1, 0),
+    "^": (0, -1),
+    ">": (1, 0),
+    "v": (0, 1)
+}
+
+
+def valid_path(path, pos, blocked):
+    x, y = pos
+    for step in path:
+        ox, oy = dir2offset[step]
+        x, y = x + ox, y + oy
+        if (x, y) in blocked:
+            return False
+    return True
+
+
+def generate_paths(start, end, blocked):
+    if start == end:
+        return "A"
+    sx, sy = start
+    ox, oy = (end[0] - sx, end[1] - sy)
+    directions = combinations("", x_offset2direction[ox], y_offset2direction[oy])
+    return [d + "A" for d in directions if valid_path(directions, start, blocked)]
+
+
+def combinations(state, left, right):
+    if left == "":
+        if len(right) == 1:
+            yield state + right
+        else:
+            yield from combinations(state + right[:1], "", right[1:])
+    elif right == "":
+        if len(left) == 1:
+            yield state + left
+        else:
+            yield from combinations(state + left[:1], left[1:], "")
+    else:
+        yield from combinations(state + left[:1], left[1:], right)
+        yield from combinations(state + right[:1], left, right[1:])
+
+
+def distance(p1, p2):
+    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+
+def typing_cost(section):
+    if "<" in section:
+        result = 6
+    elif "^" in section and ">" in section:
+        result = 4
+    elif "v" in section:
+        result = 4
+    else:
+        result = 2
+    return result + len(section) + 1
+
+
+if __name__ == "__main__":
+    main()
